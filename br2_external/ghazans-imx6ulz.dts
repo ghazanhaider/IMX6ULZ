@@ -1,0 +1,95 @@
+// SPDX-License-Identifier: (GPL-2.0 OR MIT)
+//
+// Copyright 2018 NXP.
+
+/dts-v1/;
+
+#include "imx6ulz.dtsi"
+#include "imx6ul-14x14-evk.dtsi"
+
+/delete-node/ &fec1;
+/delete-node/ &fec2;
+/delete-node/ &can1;
+/delete-node/ &can2;
+/delete-node/ &lcdif;
+/delete-node/ &tsc;
+
+/ {
+	model = "Ghazan's i.MX6 ULZ Demo Board";
+	compatible = "fsl,imx6ulz-14x14-evk", "fsl,imx6ull", "fsl,imx6ulz";
+
+	/delete-node/ panel;
+
+	mqs: mqs {
+                compatible = "fsl,imx6sx-mqs";
+		pinctrl-names = "default";
+	        pinctrl-0 = <&pinctrl_mqs>;
+        	clocks = <&clks IMX6UL_CLK_SAI1>;
+	        clock-names = "mclk";
+		gpr = <&gpr>;
+        	status = "okay";
+	};
+};
+
+
+
+&usdhc1 {
+        compatible = "fsl,imx6ull-usdhc", "fsl,imx6sx-usdhc";
+	/delete-property/ cd-gpios;
+	non-removable;
+	bus-width = <4>;
+	no-1-8-v;
+};
+
+&usdhc2 {
+        compatible = "fsl,imx6ull-usdhc", "fsl,imx6sx-usdhc";
+	/delete-property/ cd-gpios;
+	/delete-property/ keep-power-in-suspend;
+	no-1-8-v;
+	broken-cd;
+	bus-width = <1>;
+};
+
+&usbotg1 {
+        dr_mode = "peripheral";
+	pinctrl-0 = <>;
+/*        srp-disable;
+        hnp-disable;
+        adp-disable; */
+        status = "okay";
+};
+
+/*
+&qspi {
+	status = "okay";
+	cs-gpios = <&gpio1 9 GPIO_ACTIVE_LOW>;
+	flash@0 {
+		reg = <0>;
+		compatible = "jedec,spi-nor";
+	};
+};
+*/
+
+&uart2 {
+        status = "okay";
+};
+
+&sai1 {
+        pinctrl-0 = <>;
+        status = "okay";
+};
+
+&sai2 {
+        pinctrl-0 = <>;
+        status = "disabled";
+};
+
+&iomuxc {
+
+	pinctrl_mqs: mqsgrp {
+        	fsl,pins = <
+		        MX6UL_PAD_GPIO1_IO00__MQS_RIGHT 0x120b0
+		        MX6UL_PAD_GPIO1_IO01__MQS_LEFT  0x120b0
+	        >;
+        };
+};
