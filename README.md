@@ -97,103 +97,48 @@ You'll also need UART connected. My board (and dts) has uart1 as console output 
 
 `sudo uuu u-boot.imx`
 
-U-Boot will stop at some stage. Run fastboot:
+U-Boot will start and stop at some stage with an error. Run fastboot in U-Boot:
 
-`fastboot -l 0x82000000 usb 0`
+`fastboot usb 0`
 
-On the host machine, upload the u-boot file throught the fastboot protocol over USB:
+On the host machine, upload the u-boot, kernel and dtb files throught the fastboot protocol over USB:
+```
+cd images
+sudo uuu fb: download -f u-boot.imx
+sudo uuu fb: ucmd mmc write 0x82000000 0x2 0x500
+sudo uuu FB: download -f zImage
+sudo uuu fb: ucmd mmc write 0x82000000 0x1000 0x4000
+sudo uuu FB: download -f ghazans-imx6ulz.dtb
+sudo uuu fb: ucmd mmc write 0x82000000 0x5000 0x100
+```
 
-`sudo uuu fb: download -f u-boot.imx`
-
-Back in U-Boot, CTRL-C to exit fastboot and now write the uploaded image to the correct location, 1KB or 2 blocks from the start of the storage:
-
-`mmc write 0x82000000 0x2 0x500`
-
-Upload the kernel image the same way and put it 2MBytes in to give U-Boot enough space, but still in the hidden section before the first partition. We copy 8MB (0x4000 blocks)
-
-In U-Boot:
-`fastboot -l 0x82000000 -s 0x800000 usb 0`
-
-From host:
-`sudo uuu FB: download -f zImage`
-
-U-Boot:
-`mmc write 0x82000000 0x1000 0x4000`
-
-Upload the devicetree 10MB in and 128KB max size:
-
-U-Boot: `fastboot -l 0x82000000 usb 0`
-
-Host: `sudo uuu FB: download -f ghazans-imx6ulz.dtb`
-
-U-Boot: `mmc write 0x82000000 0x5000 0x100`
-
-
+*Option1: Buildroot filesystem*
 Upload the Buildroot ext4 rootfs:
-
-U-Boot: `fastboot -l 0x82000000 -s 0x8000000 usb 0`
-Host: `sudo uuu FB: download -f rootfs.ext2`
-U-Boot: `mmc write 0x82000000 0x8000 0x20000`
+```
+sudo uuu FB: download -f rootfs.ext2
+sudo uuu fb: ucmd mmc write 0x82000000 0x8000 0x20000
+```
 (Only works for 64MB images(0x20000), adjust this size according to your image)
 
-Reboot
+*Option2: Premade other bigger filesystem* (see RASPBIAN.md)
+
+And then boot:
+`sudo uuu fb: ucmd boot`
 
 
 # Boot
 
 Load kernel: `mmc read ${loadaddr} 0x1000 0x4000`
 Load dtb: `mmc read ${fdt_addr} 0x5000 0x100`
-Bootargs: `env set bootargs 'console=ttymxc0,115200 root=/dev/mmcblk0p1 rootwait rw'`
-Boot: `bootz ${loadaddr} - ${fdt_addr}`
+Bootargs: `env set bootargs 'console=ttymxc0,115200 root=/dev/mmcblk0p1 rootwait'`
+Bootcmd: `mmc read ${loadaddr} 0x1000 0x4000;mmc read ${fdt_addr} 0x5000 0x100;bootz ${loadaddr} - ${fdt_addr}`
 
-# To automate boot
-
-```
-env set bootcmd 'mmc read ${loadaddr} 0x1000 0x4000;mmc read ${fdt_addr} 0x5000 0x100;bootz ${loadaddr} - ${fdt_addr}'
-env set mmcdev 0
-env set mmcpart 0
-env save
-```
-
-Now it should boot correctly on start
+Now it should boot correctly on start and on UART1 offer a login prompt
 
 
 
-# Using a Raspbian image
+## References
 
-Download *2024-11-19-raspios-bookworm-armhf-lite.img.gz*
+Good example of MQS DTS:
+https://community.nxp.com/t5/i-MX-Processors-Knowledge-Base/MQS-in-i-MX8ULP/ta-p/1911553
 
-Unzip, mount as loopback device and extract the ext4 partition to another file
-
-Fastboot will not work for large images. It needs a buffer size bigger than the file and with 512MB memory, the largest buffer we can use is around 500MB. 
-So we use UMS in U-Boot which presents the whole eMMC as a USB Mass Storage device:
-
-`ums 0 mmc 0`
-
-Upload the ext4 partition image to the ext4 partition we created. It will take around 7 minutes.
-
-`dd if=raspios.img of=/dev/sda1 bs=1K status=progress`
-
-On first boot, Raspbian throws errors and hangs for not finding its DOS partition. It also has no password for its *pi* user.
-
-So in U-Boot, add `init=/bin/bash` to bypass systemd init on first boot:
-
-`env set bootargs 'console=ttymxc0,115200 root=/dev/mmcblk0p1 rootwait rw init=/bin/bash'`
-
-You end up in a shell.
-
-Edit */etc/fstab* and remove the vfat partition
-Change the UUID of the root partition to actual:
-
-```
-mount -t proc /proc
-blkid /dev/mmcblk0p1
-```
-
-Copy the UUID to /etc/fstab, changing PARTUUID to just UUID
-
-Add a password to the pi user:
-
-`passwd pi`
-
-Reboot and login
