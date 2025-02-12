@@ -4,8 +4,13 @@
 
 /dts-v1/;
 
+#if ((VERSION == 6) && (PATCHLEVEL >= 5)) || (VERSION > 6)
+#include "nxp/imx/imx6ulz.dtsi"
+#include "nxp/imx/imx6ul-14x14-evk.dtsi"
+#else
 #include "imx6ulz.dtsi"
 #include "imx6ul-14x14-evk.dtsi"
+#endif
 
 /delete-node/ &fec1;
 /delete-node/ &fec2;

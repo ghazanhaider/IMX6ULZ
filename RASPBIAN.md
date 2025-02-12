@@ -23,6 +23,11 @@ You end up in a shell.
 
 Edit */etc/fstab* and remove the vfat partition
 Change the UUID of the root partition to actual:
+```
+proc            /proc           proc    defaults          0       0
+UUID=bb15c8e6-d999-4838-be67-5ff200bffa46  /               ext4    defaults,noatime  0       1
+```
+
 
 ```
 mount -t proc /proc
@@ -35,7 +40,24 @@ Add a password to the pi user:
 
 `passwd pi`
 
+If youre working on the fs image offline, just remove the password entry in /etc/shadow to blank the password
+
 Reboot and login
+
+## USB Gadget
+
+Copy any kernel modules to /lib/modules and ensure g_multi.ko exists in there
+Add `g_multi` to /etc/modules
+Add `options g_multi iSerialNumber=123456 file=/file.img removable=y ro=0 stall=0` to /etc/modprobe.d/g_multi.conf
+Add a 1MB file /file.img: `dd if=/dev/zero of=/file.img count=1k bs=1k`
+Create a getty link to ttyGS0:
+```
+mkdir /etc/systemd/system/getty.target.wants
+cd /etc/systemd/system/getty.target.wants
+ln -s /lib/systemd/system/serial-getty@.service serial-getty@ttyGS0.service
+```
+
+
 
 ## TODO notes
 
