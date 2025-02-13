@@ -136,7 +136,6 @@ Bootcmd: `mmc read ${loadaddr} 0x1000 0x4000;mmc read ${fdt_addr} 0x5000 0x100;b
 Now it should boot correctly on start and on UART1 offer a login prompt
 
 
-
 ## References
 
 Good example of MQS DTS:

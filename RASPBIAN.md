@@ -2,7 +2,38 @@
 
 Download *2024-11-19-raspios-bookworm-armhf-lite.img.gz*
 
-Unzip, mount as loopback device and extract the ext4 partition to another file
+Unzip, mount as loopback device and extract the ext4 partition to another file, called raspios.img here
+
+
+## Fixup image contents
+
+Mount this partition image in a linux host:
+`losetup -fP raspios.img`
+`mounti /dev/loop0 /mnt/1`
+
+Remove pi password in /etc/shadow:
+`pi::20130:0:99999:7:::`
+
+## USB Gadget
+
+Copy any kernel modules to /lib/modules and ensure g_multi.ko exists in there
+Add `g_multi` to /etc/modules
+Add `options g_multi iSerialNumber=123456 file=/file.img removable=y ro=0 stall=0` to /etc/modprobe.d/g_multi.conf
+Add a 1MB file /file.img: `dd if=/dev/zero of=/file.img count=1k bs=1k`
+Create a getty link to ttyGS0:
+```
+mkdir /etc/systemd/system/getty.target.wants
+cd /etc/systemd/system/getty.target.wants
+ln -s /lib/systemd/system/serial-getty@.service serial-getty@ttyGS0.service
+```
+
+## ATWILC1000 firmware
+
+Download firmware files: https://github.com/linux4wilc/firmware
+Place them 
+
+
+## Burn image and first boot
 
 Fastboot will not work for large images. It needs a buffer size bigger than the file and with 512MB memory, the largest buffer we can use is around 500MB. 
 So we use UMS in U-Boot which presents the whole eMMC as a USB Mass Storage device:
@@ -43,19 +74,6 @@ Add a password to the pi user:
 If youre working on the fs image offline, just remove the password entry in /etc/shadow to blank the password
 
 Reboot and login
-
-## USB Gadget
-
-Copy any kernel modules to /lib/modules and ensure g_multi.ko exists in there
-Add `g_multi` to /etc/modules
-Add `options g_multi iSerialNumber=123456 file=/file.img removable=y ro=0 stall=0` to /etc/modprobe.d/g_multi.conf
-Add a 1MB file /file.img: `dd if=/dev/zero of=/file.img count=1k bs=1k`
-Create a getty link to ttyGS0:
-```
-mkdir /etc/systemd/system/getty.target.wants
-cd /etc/systemd/system/getty.target.wants
-ln -s /lib/systemd/system/serial-getty@.service serial-getty@ttyGS0.service
-```
 
 
 
