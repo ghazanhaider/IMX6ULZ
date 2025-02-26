@@ -128,12 +128,24 @@ And then boot:
 
 # Boot
 
+It is much better to load kernel and dtb from /boot of the filesystem like Raspberry pi
+Copy the kernel to /boot as vmlinuz
+Copy the dtb file to /boot as well
+
+Listing /boot from within u-boot: `ls mmc 0:1 /boot`
+Load kernel: `load mmc 0:1 ${loadaddr} /boot/vmlinuz`
+Load dtb: `load mmc 0:1 ${fdt_addr} /boot/ghazans-imx6ulz.dtb`
+Bootargs: `env set bootargs 'console=ttymxc0,115200 root=/dev/mmcblk0p1 rootwait'`
+Bootcmd: `load mmc 0:1 ${loadaddr} /boot/vmlinuz;load mmc 0:1 ${fdt_addr} /boot/ghazans-imx6ulz.dtb;bootz ${loadaddr} - ${fdt_addr}`
+
+Now it should boot correctly on start and on UART1 offer a login prompt
+
+
+### Older flash address style:
 Load kernel: `mmc read ${loadaddr} 0x1000 0x4000`
 Load dtb: `mmc read ${fdt_addr} 0x5000 0x100`
 Bootargs: `env set bootargs 'console=ttymxc0,115200 root=/dev/mmcblk0p1 rootwait'`
 Bootcmd: `mmc read ${loadaddr} 0x1000 0x4000;mmc read ${fdt_addr} 0x5000 0x100;bootz ${loadaddr} - ${fdt_addr}`
-
-Now it should boot correctly on start and on UART1 offer a login prompt
 
 
 ## References
